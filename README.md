@@ -85,23 +85,23 @@ npm test       # test runner
 
 ```
 src/
-├── api/tmdb.js              # axios instance and all TMDb calls
-├── components/              # reusable UI pieces
-│   ├── Layout.jsx           # navbar + page container
+├── api/tmdb.js              
+├── components/              
+│   ├── Layout.jsx           
 │   ├── Navbar.jsx
 │   ├── SearchBar.jsx
 │   ├── FilterBar.jsx
 │   ├── MovieCard.jsx
-│   ├── MovieGrid.jsx        # grid + skeletons + empty/error states
+│   ├── MovieGrid.jsx        
 │   ├── MovieCarousel.jsx
-│   ├── RowSkeleton.jsx      # placeholder for the trending row
+│   ├── RowSkeleton.jsx      
 │   ├── LoadMoreButton.jsx
 │   ├── Rating.jsx
 │   ├── ErrorMessage.jsx
 │   ├── EmptyState.jsx
-│   ├── SetupCard.jsx        # shown when the API key is missing
+│   ├── SetupCard.jsx        
 │   └── ProtectedRoute.jsx
-├── context/                 # state shared across the app
+├── context/                 
 │   ├── AuthContext.jsx
 │   ├── FavoritesContext.jsx
 │   └── ThemeModeContext.jsx
