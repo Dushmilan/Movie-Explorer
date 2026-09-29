@@ -1,0 +1,15 @@
+{
+  "short_name": "Movie Explorer",
+  "name": "Movie Explorer App",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f1115",
+  "background_color": "#0f1115"
+}
