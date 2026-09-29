@@ -55,20 +55,30 @@ export default function Login() {
     }
   };
 
+  // The background follows the chosen theme instead of always forcing a dark
+  // screen, so the login page never clashes with the rest of the app.
+  const backdrop = {
+    backgroundImage:
+      mode === 'dark'
+        ? 'linear-gradient(135deg, #1a1d24 0%, #0f1115 60%)'
+        : 'linear-gradient(135deg, #eef1f5 0%, #f4f6f8 60%)',
+  };
+
   return (
     <Box
       sx={{
         position: 'relative',
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'grid',
         placeItems: 'center',
         p: 2,
-        background: 'linear-gradient(135deg, #1a1d24 0%, #0f1115 60%)',
+        bgcolor: 'background.default',
+        ...backdrop,
       }}
     >
       <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
         <Tooltip title={mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
-          <IconButton onClick={toggleMode} sx={{ color: '#fff' }} aria-label="Toggle theme">
+          <IconButton onClick={toggleMode} color="inherit" aria-label="Toggle theme">
             {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
         </Tooltip>

@@ -5,15 +5,19 @@ import Box from '@mui/material/Box';
 import MovieCard from './MovieCard';
 import ErrorMessage from './ErrorMessage';
 import EmptyState from './EmptyState';
+import { radius } from '../theme';
 
 // Responsive poster grid. Also owns the loading skeletons and the error /
-// empty states so the pages stay short.
+// empty states so the pages stay short. The skeletons copy the card's real
+// shape: poster first, then the title and the year under it.
 export default function MovieGrid({
   movies,
   loading = false,
   error = '',
   onRetry,
+  emptyTitle = 'Nothing here yet',
   emptyMessage = 'No movies found.',
+  emptyAction,
   skeletonCount = 12,
 }) {
   if (error) {
@@ -26,10 +30,23 @@ export default function MovieGrid({
         {Array.from({ length: skeletonCount }).map((_, index) => (
           <Grid item xs={6} sm={4} md={3} lg={2} key={`skeleton-${index}`}>
             <Card>
-              <Skeleton variant="rectangular" sx={{ pt: '150%', height: 0 }} />
-              <Box sx={{ p: 2 }}>
+              <Box sx={{ position: 'relative', pt: '150%', height: 0, backgroundColor: 'action.hover' }}>
+                <Skeleton
+                  variant="rounded"
+                  sx={{
+                    position: 'absolute',
+                    left: 8,
+                    bottom: 8,
+                    width: 46,
+                    height: 22,
+                    borderRadius: radius.pill,
+                  }}
+                />
+              </Box>
+              <Box sx={{ p: 1.5 }}>
                 <Skeleton width="85%" />
-                <Skeleton width="45%" />
+                <Skeleton width="85%" />
+                <Skeleton width="40%" />
               </Box>
             </Card>
           </Grid>
@@ -39,7 +56,9 @@ export default function MovieGrid({
   }
 
   if (!movies.length) {
-    return <EmptyState title="Nothing here yet" message={emptyMessage} />;
+    return (
+      <EmptyState title={emptyTitle} message={emptyMessage} action={emptyAction} />
+    );
   }
 
   return (

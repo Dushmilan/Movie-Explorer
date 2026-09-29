@@ -7,12 +7,13 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import StarIcon from '@mui/icons-material/Star';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { getImageUrl } from '../api/tmdb';
-import { getReleaseYear } from '../utils/format';
+import { formatRating, getReleaseYear } from '../utils/format';
 import { useFavorites } from '../context/FavoritesContext';
-import Rating from './Rating';
+import { radius } from '../theme';
 
 export default function MovieCard({ movie }) {
   const navigate = useNavigate();
@@ -28,8 +29,9 @@ export default function MovieCard({ movie }) {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        transition: 'transform 150ms ease',
-        '&:hover': { transform: 'translateY(-4px)' },
+        borderRadius: radius.surface,
+        transition: 'transform 150ms ease, box-shadow 150ms ease',
+        '&:hover': { transform: 'translateY(-4px)', boxShadow: 8 },
       }}
     >
       {/* Sits outside the CardActionArea so tapping it does not open the movie. */}
@@ -56,7 +58,15 @@ export default function MovieCard({ movie }) {
       </Tooltip>
 
       <CardActionArea onClick={() => navigate(`/movie/${movie.id}`)} sx={{ height: '100%' }}>
-        <Box sx={{ position: 'relative', pt: '150%', backgroundColor: 'action.hover' }}>
+        <Box
+          sx={{
+            position: 'relative',
+            pt: '150%',
+            backgroundColor: 'action.hover',
+            borderRadius: radius.media,
+            overflow: 'hidden',
+          }}
+        >
           {poster ? (
             <Box
               component="img"
@@ -69,6 +79,8 @@ export default function MovieCard({ movie }) {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
+                transition: 'transform 250ms ease',
+                '.MuiCard-root:hover &': { transform: 'scale(1.04)' },
               }}
             />
           ) : (
@@ -86,24 +98,44 @@ export default function MovieCard({ movie }) {
               <Typography variant="body2">{movie.title}</Typography>
             </Box>
           )}
+
+          {/* Rating sits on the poster so the info line under the title stays
+              roomy. The gradient keeps it readable over any artwork. */}
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={0.4}
+            sx={{
+              position: 'absolute',
+              left: 8,
+              bottom: 8,
+              px: 0.75,
+              py: 0.25,
+              borderRadius: radius.pill,
+              backgroundColor: 'rgba(0, 0, 0, 0.72)',
+              color: '#fff',
+            }}
+          >
+            <StarIcon sx={{ fontSize: 14, color: '#f5c518' }} />
+            <Typography variant="caption" fontWeight={700} sx={{ lineHeight: 1.4 }}>
+              {formatRating(movie.vote_average)}
+            </Typography>
+          </Stack>
         </Box>
 
-        <CardContent sx={{ flexGrow: 1 }}>
+        <CardContent sx={{ flexGrow: 1, px: 1.5, py: 1.5, '&:last-child': { pb: 1.5 } }}>
           <Typography
-            variant="subtitle1"
+            variant="subtitle2"
             fontWeight={600}
             className="clamp-two-lines"
-            sx={{ minHeight: 48 }}
+            sx={{ minHeight: 44 }}
           >
             {movie.title}
           </Typography>
 
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              {getReleaseYear(movie.release_date)}
-            </Typography>
-            <Rating value={movie.vote_average} />
-          </Stack>
+          <Typography variant="body2" color="text.secondary">
+            {getReleaseYear(movie.release_date)}
+          </Typography>
         </CardContent>
       </CardActionArea>
     </Card>

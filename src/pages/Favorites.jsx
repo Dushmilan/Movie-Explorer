@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import MovieGrid from '../components/MovieGrid';
@@ -6,6 +8,7 @@ import EmptyState from '../components/EmptyState';
 import { useFavorites } from '../context/FavoritesContext';
 
 export default function Favorites() {
+  const navigate = useNavigate();
   const { favorites } = useFavorites();
 
   const count = favorites.length;
@@ -28,6 +31,11 @@ export default function Favorites() {
           icon={<FavoriteBorderIcon sx={{ fontSize: 56 }} />}
           title="No favourites yet"
           message="Tap the heart on any movie to save it here."
+          action={
+            <Button variant="contained" onClick={() => navigate('/')}>
+              Browse trending
+            </Button>
+          }
         />
       ) : (
         <MovieGrid movies={favorites} />

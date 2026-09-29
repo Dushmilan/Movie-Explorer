@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getErrorMessage, getTrending } from '../api/tmdb';
 
 // Loads the weekly trending list once when the home page mounts.
@@ -6,6 +6,8 @@ export default function useTrending() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Bumped by the Retry button to re-run the effect below.
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let isActive = true;
@@ -33,7 +35,9 @@ export default function useTrending() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [reloadKey]);
 
-  return { movies, loading, error };
+  const retry = useCallback(() => setReloadKey((key) => key + 1), []);
+
+  return { movies, loading, error, retry };
 }

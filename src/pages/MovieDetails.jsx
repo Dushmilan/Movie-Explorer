@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -8,10 +8,10 @@ import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
+import Skeleton from '@mui/material/Skeleton';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import StarIcon from '@mui/icons-material/Star';
 import {
   getErrorMessage,
   getImageUrl,
@@ -19,14 +19,45 @@ import {
   getMovieDetails,
   getMovieVideos,
 } from '../api/tmdb';
-import { formatRating, formatRuntime, getReleaseYear } from '../utils/format';
+import { formatRuntime, getReleaseYear } from '../utils/format';
+import { radius } from '../theme';
 import { useFavorites } from '../context/FavoritesContext';
-import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
-
-// White outlined chips are used over the dark backdrop so they stay readable
-// in both the light and dark themes.
+import Rating from '../components/Rating';
+// White on a dark gradient. This block sits on top of a photograph, so it
+// keeps a fixed contrast regardless of whether the app is in light or dark
+// mode.
 const heroChipSx = { color: '#fff', borderColor: 'rgba(255, 255, 255, 0.5)' };
+
+// Skeleton mirrors the real layout (poster, title, chips, overview) so the
+// page does not jump when the data lands.
+function DetailsSkeleton() {
+  return (
+    <Box>
+      <Skeleton sx={{ mb: 2, width: 90, borderRadius: radius.surface }} />
+      <Box sx={{ borderRadius: radius.media, overflow: 'hidden', mb: 4 }}>
+        <Grid container spacing={3} sx={{ p: { xs: 2, sm: 3 }, bgcolor: 'background.paper' }}>
+          <Grid item xs={12} sm={4} md={3}>
+            <Skeleton variant="rectangular" sx={{ pt: '150%', height: 0, borderRadius: radius.surface }} />
+          </Grid>
+          <Grid item xs={12} sm={8} md={9}>
+            <Skeleton width="70%" height={44} />
+            <Skeleton width="40%" height={24} sx={{ mt: 1 }} />
+            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+              <Skeleton width={70} height={26} variant="rounded" />
+              <Skeleton width={70} height={26} variant="rounded" />
+              <Skeleton width={90} height={26} variant="rounded" />
+            </Stack>
+            <Skeleton sx={{ mt: 3 }} />
+            <Skeleton />
+            <Skeleton width="85%" />
+            <Skeleton width="60%" sx={{ mt: 3 }} />
+          </Grid>
+        </Grid>
+      </Box>
+    </Box>
+  );
+}
 
 export default function MovieDetails() {
   const { id } = useParams();
@@ -38,6 +69,11 @@ export default function MovieDetails() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Bumped by the Retry button to re-run the effect below.
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const trailerRef = useRef(null);
+  const [trailerMounted, setTrailerMounted] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -68,29 +104,82 @@ export default function MovieDetails() {
     return () => {
       isActive = false;
     };
-  }, [id]);
+  }, [id, reloadKey]);
 
-  if (loading) return <Loader message="Loading movie details..." />;
-  if (error) return <ErrorMessage message={error} />;
+  // Prefer a proper trailer, fall back to any YouTube clip the movie has.
+  const trailer = useMemo(
+    () =>
+      videos.find((video) => video.site === 'YouTube' && video.type === 'Trailer') ||
+      videos.find((video) => video.site === 'YouTube') ||
+      null,
+    [videos]
+  );
+
+  // The embed pulls in YouTube's player, so only mount it once the section is
+  // actually close to the viewport. Keeps the initial load cheap.
+  useEffect(() => {
+    if (!trailer || trailerMounted) return undefined;
+
+    const node = trailerRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setTrailerMounted(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setTrailerMounted(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [trailer, trailerMounted]);
+
+  const handleRetry = () => setReloadKey((key) => key + 1);
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
+  if (loading) return <DetailsSkeleton />;
+
+  if (error) {
+    return (
+      <Box sx={{ maxWidth: 720, mx: 'auto', py: 4 }}>
+        <ErrorMessage message={error} onRetry={handleRetry} />
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Button startIcon={<ArrowBackIcon />} onClick={handleBack}>
+            Back
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
   if (!movie) return null;
 
   const backdrop = getImageUrl(movie.backdrop_path, 'w780');
   const poster = getImageUrl(movie.poster_path, 'w500');
-  const trailer =
-    videos.find((video) => video.site === 'YouTube' && video.type === 'Trailer') ||
-    videos.find((video) => video.site === 'YouTube');
   const favorite = isFavorite(movie.id);
 
   return (
     <Box>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)} sx={{ mb: 2 }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mb: 2 }}>
         Back
       </Button>
 
       <Box
         sx={{
           position: 'relative',
-          borderRadius: 3,
+          borderRadius: radius.media,
           overflow: 'hidden',
           mb: 4,
           backgroundColor: 'background.paper',
@@ -99,7 +188,16 @@ export default function MovieDetails() {
           backgroundPosition: 'center',
         }}
       >
-        <Box sx={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.65)' }} />
+        {/* Gradient rather than a flat tint, so the artwork still reads through
+            at the top while the copy at the bottom keeps its contrast. */}
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.72) 55%, rgba(0,0,0,0.85) 100%)',
+          }}
+        />
 
         <Grid container spacing={3} sx={{ position: 'relative', p: { xs: 2, sm: 3 } }}>
           <Grid item xs={12} sm={4} md={3}>
@@ -111,7 +209,7 @@ export default function MovieDetails() {
                 sx={{
                   width: '100%',
                   maxWidth: 260,
-                  borderRadius: 2,
+                  borderRadius: radius.media,
                   display: 'block',
                   mx: { xs: 'auto', sm: 0 },
                 }}
@@ -125,21 +223,25 @@ export default function MovieDetails() {
             </Typography>
 
             {movie.tagline && (
-              <Typography variant="subtitle1" sx={{ opacity: 0.8, mb: 1 }}>
+              <Typography variant="subtitle1" sx={{ opacity: 0.85, mb: 1 }}>
                 {movie.tagline}
               </Typography>
             )}
 
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
-              <Chip size="small" variant="outlined" label={getReleaseYear(movie.release_date)} sx={heroChipSx} />
-              <Chip size="small" variant="outlined" label={formatRuntime(movie.runtime)} sx={heroChipSx} />
               <Chip
                 size="small"
                 variant="outlined"
-                icon={<StarIcon sx={{ color: '#f5c518 !important' }} />}
-                label={`${formatRating(movie.vote_average)} / 10`}
+                label={getReleaseYear(movie.release_date)}
                 sx={heroChipSx}
               />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={formatRuntime(movie.runtime)}
+                sx={heroChipSx}
+              />
+              <Rating value={movie.vote_average} light suffix=" / 10" />
             </Stack>
 
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
@@ -148,7 +250,7 @@ export default function MovieDetails() {
               ))}
             </Stack>
 
-            <Typography variant="body1" sx={{ maxWidth: 800, opacity: 0.9 }}>
+            <Typography variant="body1" sx={{ maxWidth: 800, opacity: 0.92 }}>
               {movie.overview || 'No overview available for this movie.'}
             </Typography>
 
@@ -166,7 +268,7 @@ export default function MovieDetails() {
       </Box>
 
       {trailer && (
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 4 }} ref={trailerRef}>
           <Typography variant="h5" gutterBottom>
             Trailer
           </Typography>
@@ -174,19 +276,22 @@ export default function MovieDetails() {
             sx={{
               position: 'relative',
               pt: '56.25%',
-              borderRadius: 2,
+              borderRadius: radius.media,
               overflow: 'hidden',
               backgroundColor: '#000',
             }}
           >
-            <Box
-              component="iframe"
-              title={`${movie.title} trailer`}
-              src={`https://www.youtube.com/embed/${trailer.key}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
-            />
+            {trailerMounted && (
+              <Box
+                component="iframe"
+                title={`${movie.title} trailer`}
+                src={`https://www.youtube.com/embed/${trailer.key}`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+                sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
+              />
+            )}
           </Box>
         </Box>
       )}

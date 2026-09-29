@@ -26,9 +26,12 @@ export default function useMovieSearch({ query, filters }) {
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
+  // Bumped by the Retry button to re-run the first page request.
+  const [reloadKey, setReloadKey] = useState(0);
 
   const term = query.trim();
   const { genreId, year, minRating } = filters;
@@ -39,6 +42,7 @@ export default function useMovieSearch({ query, filters }) {
       setMovies([]);
       setPage(0);
       setTotalPages(1);
+      setTotalResults(0);
       setError('');
       return undefined;
     }
@@ -53,6 +57,7 @@ export default function useMovieSearch({ query, filters }) {
         if (!isActiveRequest) return;
         setMovies(response.data.results || []);
         setTotalPages(response.data.total_pages || 1);
+        setTotalResults(response.data.total_results || 0);
         setPage(1);
       } catch (err) {
         if (isActiveRequest) {
@@ -70,7 +75,7 @@ export default function useMovieSearch({ query, filters }) {
     return () => {
       isActiveRequest = false;
     };
-  }, [term, genreId, year, minRating, isActive]);
+  }, [term, genreId, year, minRating, isActive, reloadKey]);
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || page === 0 || page >= totalPages) return;
@@ -90,5 +95,17 @@ export default function useMovieSearch({ query, filters }) {
 
   const hasMore = page > 0 && page < totalPages;
 
-  return { movies, loading, loadingMore, error, hasMore, loadMore, isActive };
+  const retry = () => setReloadKey((key) => key + 1);
+
+  return {
+    movies,
+    totalResults,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    loadMore,
+    retry,
+    isActive,
+  };
 }

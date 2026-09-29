@@ -28,3 +28,24 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Used for the overview on the details page and the featured blurb. */
+.clamp-three-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Respect the OS motion setting: cut transforms and transitions right down
+   so the hover lifts and fades do not run for anyone who has opted out. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

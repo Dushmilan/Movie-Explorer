@@ -15,6 +15,7 @@ API.
 - Axios
 - React Context API for state
 - localStorage for persistence
+- Outfit for headings and Roboto for body text (Google Fonts)
 
 ## Features
 
@@ -23,19 +24,27 @@ API.
   signed in.
 - **Search** - debounced search against `/search/movie`, with a **Load more**
   button for the next page of results.
+- **Filters** (bonus) - browse by genre, release year and minimum rating using
+  `/discover/movie`. Active filters show as removable chips next to the result
+  count, and they apply while the search box is empty.
 - **Trending** - a swipeable row of this week's trending movies from
   `/trending/movie/week`.
 - **Movie details** - overview, genres, runtime, rating, backdrop, top billed
-  cast and the YouTube trailer if one exists.
-- **Filters** (bonus) - browse by genre, release year and minimum rating using
-  `/discover/movie`. Filters apply while the search box is empty.
+  cast and the YouTube trailer if one exists. The trailer embed only mounts
+  once you scroll near it.
 - **Favourites** - tap the heart on any card to save it. The list survives a
   refresh and has its own page.
 - **Last search** - whatever you searched for last is restored next time.
 - **Light / dark mode** - toggle in the navbar, remembered across sessions.
+  Every screen follows the theme, including the login page.
 - **Responsive** - mobile-first layout that scales up to a full desktop grid.
+- **Loading and empty states** - skeletons shaped like the real cards and
+  detail page, plus empty states with a clear next step.
 - **Error handling** - friendly messages for a missing key, network problems,
-  a bad request or rate limiting.
+  a bad request or rate limiting. A missing API key shows setup instructions
+  instead of an error. Errors have a retry button.
+- **Accessibility** - labelled icon buttons, and `prefers-reduced-motion` turns
+  off the hover transitions for anyone who has asked for that.
 
 ## Getting started
 
@@ -83,13 +92,14 @@ src/
 │   ├── SearchBar.jsx
 │   ├── FilterBar.jsx
 │   ├── MovieCard.jsx
-│   ├── MovieGrid.jsx
+│   ├── MovieGrid.jsx        # grid + skeletons + empty/error states
 │   ├── MovieCarousel.jsx
+│   ├── RowSkeleton.jsx      # placeholder for the trending row
 │   ├── LoadMoreButton.jsx
 │   ├── Rating.jsx
-│   ├── Loader.jsx
 │   ├── ErrorMessage.jsx
 │   ├── EmptyState.jsx
+│   ├── SetupCard.jsx        # shown when the API key is missing
 │   └── ProtectedRoute.jsx
 ├── context/                 # state shared across the app
 │   ├── AuthContext.jsx
@@ -97,6 +107,7 @@ src/
 │   └── ThemeModeContext.jsx
 ├── hooks/
 │   ├── useDebounce.js
+│   ├── useGenres.js
 │   ├── useMovieSearch.js
 │   └── useTrending.js
 ├── pages/

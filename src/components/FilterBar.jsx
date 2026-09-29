@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import MenuItem from '@mui/material/MenuItem';
 import Button from '@mui/material/Button';
 import ClearIcon from '@mui/icons-material/Clear';
-import { getGenres } from '../api/tmdb';
 
 const RATING_OPTIONS = [9, 8, 7, 6];
 const CURRENT_YEAR = new Date().getFullYear();
@@ -12,27 +10,10 @@ const YEARS = Array.from({ length: CURRENT_YEAR - 1949 }, (_, index) => CURRENT_
 
 // Bonus feature: browse by genre, year or minimum rating using /discover/movie.
 // Filters only apply when the search box is empty, so the parent disables this
-// bar while a text search is running.
-export default function FilterBar({ filters, onChange, onClear, disabled = false }) {
-  const [genres, setGenres] = useState([]);
-
-  useEffect(() => {
-    let isActive = true;
-
-    getGenres()
-      .then((response) => {
-        if (isActive) setGenres(response.data.genres || []);
-      })
-      .catch(() => {
-        // A missing genre list is not fatal - the other filters still work.
-        if (isActive) setGenres([]);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, []);
-
+// bar while a text search is running. The genre list is fetched once by the
+// page and passed in, so the chips next to the results can resolve the same
+// names.
+export default function FilterBar({ genres, filters, onChange, onClear, disabled = false }) {
   const handleChange = (field) => (event) => {
     onChange({ ...filters, [field]: event.target.value });
   };

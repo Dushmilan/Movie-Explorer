@@ -1,4 +1,4 @@
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -21,9 +21,15 @@ import { useThemeMode } from '../context/ThemeModeContext';
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut } = useAuth();
   const { favorites } = useFavorites();
   const { mode, toggleMode } = useThemeMode();
+
+  const onFavourites = location.pathname === '/favorites';
+  // The home route also catches the movie details pages, since those are only
+  // ever reached from a list.
+  const onHome = !onFavourites && location.pathname !== '/login';
 
   const handleLogout = () => {
     signOut();
@@ -58,17 +64,26 @@ export default function Navbar() {
         )}
 
         <Button
-          color="inherit"
+          color={onHome ? 'primary' : 'inherit'}
           component={RouterLink}
           to="/"
           startIcon={<HomeIcon />}
-          sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          sx={{
+            display: { xs: 'none', sm: 'inline-flex' },
+            fontWeight: onHome ? 700 : 500,
+          }}
         >
           Home
         </Button>
 
         <Tooltip title="Favourites">
-          <IconButton component={RouterLink} to="/favorites" color="inherit" aria-label="Favourites">
+          <IconButton
+            component={RouterLink}
+            to="/favorites"
+            color={onFavourites ? 'primary' : 'inherit'}
+            aria-label="Favourites"
+            aria-current={onFavourites ? 'page' : undefined}
+          >
             <Badge badgeContent={favorites.length} color="primary">
               <FavoriteIcon />
             </Badge>
