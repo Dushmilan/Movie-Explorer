@@ -1,0 +1,18 @@
+# Netlify reads this file when the site is connected to the GitHub repo, so the
+# build settings below are picked up automatically instead of being typed in.
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  # Matches the version the app is developed on locally. react-scripts 5 works
+  # on 18 and 22, so pinning just keeps the two environments in step.
+  NODE_VERSION = "22"
+
+# React Router runs on the client, so anything that is not a real file has to
+# fall back to index.html or direct links like /movie/27205 would 404.
+# public/_redirects carries the same rule and gets copied into build/.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -152,9 +152,14 @@ environment variable set: `REACT_APP_TMDB_API_KEY`.
 
 **Netlify**
 
-- Build command `npm run build`, publish directory `build`.
-- Add `REACT_APP_TMDB_API_KEY` under Site settings → Environment variables.
-- `public/_redirects` makes sure deep links like `/movie/27205` don't 404.
+- Connect the GitHub repository, **not** a manual deploy. `netlify.toml` is
+  committed, so the build command (`npm run build`), the publish directory
+  (`build`) and the Node version are picked up automatically.
+- Add `REACT_APP_TMDB_API_KEY` under Site settings → Environment variables,
+  then trigger a redeploy. CRA reads the key at build time, so a site built
+  without it will show the setup card instead of any movies.
+- Deep links like `/movie/27205` are covered by the redirect in `netlify.toml`
+  and `public/_redirects`, so they don't 404 on refresh.
 
 ## Notes
 
